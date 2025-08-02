@@ -6,7 +6,6 @@
 #include <AC_PID/AC_P.h>            // P library
 #include <AC_PID/AC_PID.h>          // PID library
 #include <AC_PID/AC_P_1D.h>         // P library (1-axis)
-#include <AC_PID/AC_P_2D.h>         // P library (2-axis)
 #include <AC_PID/AC_PI_2D.h>        // PI library (2-axis)
 #include <AC_PID/AC_PID_Basic.h>    // PID library (1-axis)
 #include <AC_PID/AC_PID_2D.h>       // PID library (2-axis)
@@ -130,15 +129,15 @@ public:
     void set_pos_error_max_NE_cm(float error_max_cm) { set_pos_error_max_NE_m(error_max_cm * 0.01); }
 
     // Sets maximum allowed horizontal position error in meters.
-    // Used to constrain the output of the horizontal position P controller.
-    void set_pos_error_max_NE_m(float error_max_m) { _p_pos_ne_m.set_error_max(error_max_m); }
+    // Used to constrain the output of the horizontal position PID controller.
+    void set_pos_error_max_NE_m(float error_max_m) { _pos_error_max_ne_m = error_max_m; }
 
     // Returns maximum allowed horizontal position error in cm.
     // See get_pos_error_max_NE_m() for full details.
     float get_pos_error_max_NE_cm() const { return get_pos_error_max_NE_m() * 100.0; }
 
     // Returns maximum allowed horizontal position error in meters.
-    float get_pos_error_max_NE_m() const { return _p_pos_ne_m.get_error_max(); }
+    float get_pos_error_max_NE_m() const { return _pos_error_max_ne_m; }
 
     // Initializes NE controller to a stationary stopping point with zero velocity and acceleration.
     // Use when the expected trajectory begins at rest but the starting position is unspecified.
@@ -689,8 +688,8 @@ public:
 
     /// Other
 
-    // Returns reference to the NE position P controller.
-    AC_P_2D& get_pos_NE_p() { return _p_pos_ne_m; }
+    // Returns reference to the NE position PID controller.
+    AC_PID_2D& get_pos_NE_pid() { return _p_pos_ne_m; }
 
     // Returns reference to the U (vertical) position P controller.
     AC_P_1D& get_pos_U_p() { return _p_pos_u_m; }
@@ -864,7 +863,8 @@ protected:
     AP_Float        _lean_angle_max_deg;    // Maximum autopilot commanded angle (in degrees). Set to zero for Angle Max
     AP_Float        _shaping_jerk_ne_msss;  // Jerk limit of the ne kinematic path generation in m/s³ used to determine how quickly the aircraft varies the acceleration target
     AP_Float        _shaping_jerk_u_msss;   // Jerk limit of the u kinematic path generation in m/s³ used to determine how quickly the aircraft varies the acceleration target
-    AC_P_2D         _p_pos_ne_m;            // XY axis position controller to convert target distance (cm) to target velocity (cm/s)
+    AC_PID_2D       _p_pos_ne_m;            // XY axis position controller to convert target distance (m) to target velocity (m/s)
+    float           _pos_error_max_ne_m;    // maximum allowed horizontal position error in meters
     AC_P_1D         _p_pos_u_m;             // Z axis position controller to convert target altitude (cm) to target climb rate (cm/s)
     AC_PID_2D       _pid_vel_ne_cm;         // XY axis velocity controller to convert target velocity (cm/s) to target acceleration (cm/s²)
     AC_PID_Basic    _pid_vel_u_cm;          // Z axis velocity controller to convert target climb rate (cm/s) to target acceleration (cm/s²)

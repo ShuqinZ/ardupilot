@@ -166,7 +166,7 @@ AP_Float *AP_Tuning_Plane::get_param_pointer(uint8_t parm)
         return &plane.quadplane.attitude_control->get_angle_yaw_p().kP();
 
     case TUNING_PXY_P:
-        return &plane.quadplane.pos_control->get_pos_NE_p().kP();
+        return &plane.quadplane.pos_control->get_pos_NE_pid().kP();
 
     case TUNING_PZ_P:
         return &plane.quadplane.pos_control->get_pos_U_p().kP();

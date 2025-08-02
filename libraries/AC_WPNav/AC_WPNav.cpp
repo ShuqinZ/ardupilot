@@ -548,7 +548,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
         const float track_error_neu_m = _pos_control.get_pos_error_NEU_m().dot(track_direction_neu);
         const float track_velocity_neu_ms = _pos_control.get_vel_estimate_NEU_ms().dot(track_direction_neu);
         // limit time step scalar to [0,1], with 5% buffer
-        track_dt_scalar = constrain_float(0.05f + (track_velocity_neu_ms - _pos_control.get_pos_NE_p().kP() * track_error_neu_m) / curr_target_vel_neu_ms.length(), 0.0f, 1.0f);
+        track_dt_scalar = constrain_float(0.05f + (track_velocity_neu_ms - _pos_control.get_pos_NE_pid().kP() * track_error_neu_m) / curr_target_vel_neu_ms.length(), 0.0f, 1.0f);
     }
 
     // compute velocity scaling (vel_dt_scalar) and apply jerk-limited velocity shaping
