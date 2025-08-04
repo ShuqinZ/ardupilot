@@ -22,6 +22,12 @@ extern const AP_HAL::HAL& hal;
  # define POSCONTROL_ACC_Z_FILT_HZ              10.0f   // vertical acceleration controller input filter default
  # define POSCONTROL_ACC_Z_DT                   0.02f   // vertical acceleration controller dt default
  # define POSCONTROL_POS_XY_P                   0.5f    // horizontal position controller P gain default
+ # define POSCONTROL_POS_XY_I                   0.0f    // horizontal position controller I gain default
+ # define POSCONTROL_POS_XY_D                   0.0f    // horizontal position controller D gain default
+ # define POSCONTROL_POS_XY_FF                  0.0f    // horizontal position controller feed-forward gain default
+ # define POSCONTROL_POS_XY_IMAX                1.0f    // horizontal position controller integrator maximum
+ # define POSCONTROL_POS_XY_FILT_HZ             5.0f    // horizontal position controller input filter
+ # define POSCONTROL_POS_XY_FILT_D_HZ           5.0f    // horizontal position controller derivative filter
  # define POSCONTROL_VEL_XY_P                   0.7f    // horizontal velocity controller P gain default
  # define POSCONTROL_VEL_XY_I                   0.35f    // horizontal velocity controller I gain default
  # define POSCONTROL_VEL_XY_D                   0.17f   // horizontal velocity controller D gain default
@@ -42,6 +48,12 @@ extern const AP_HAL::HAL& hal;
  # define POSCONTROL_ACC_Z_FILT_HZ              20.0f   // vertical acceleration controller input filter default
  # define POSCONTROL_ACC_Z_DT                   0.0025f // vertical acceleration controller dt default
  # define POSCONTROL_POS_XY_P                   1.0f    // horizontal position controller P gain default
+ # define POSCONTROL_POS_XY_I                   0.0f    // horizontal position controller I gain default
+ # define POSCONTROL_POS_XY_D                   0.0f    // horizontal position controller D gain default
+ # define POSCONTROL_POS_XY_FF                  0.0f    // horizontal position controller feed-forward gain default
+ # define POSCONTROL_POS_XY_IMAX                1.0f    // horizontal position controller integrator maximum
+ # define POSCONTROL_POS_XY_FILT_HZ             5.0f    // horizontal position controller input filter
+ # define POSCONTROL_POS_XY_FILT_D_HZ           5.0f    // horizontal position controller derivative filter
  # define POSCONTROL_VEL_XY_P                   1.0f    // horizontal velocity controller P gain default
  # define POSCONTROL_VEL_XY_I                   0.5f    // horizontal velocity controller I gain default
  # define POSCONTROL_VEL_XY_D                   0.0f    // horizontal velocity controller D gain default
@@ -62,6 +74,12 @@ extern const AP_HAL::HAL& hal;
  # define POSCONTROL_ACC_Z_FILT_HZ              20.0f   // vertical acceleration controller input filter default
  # define POSCONTROL_ACC_Z_DT                   0.0025f // vertical acceleration controller dt default
  # define POSCONTROL_POS_XY_P                   1.0f    // horizontal position controller P gain default
+ # define POSCONTROL_POS_XY_I                   0.0f    // horizontal position controller I gain default
+ # define POSCONTROL_POS_XY_D                   0.0f    // horizontal position controller D gain default
+ # define POSCONTROL_POS_XY_FF                  0.0f    // horizontal position controller feed-forward gain default
+ # define POSCONTROL_POS_XY_IMAX                1.0f    // horizontal position controller integrator maximum
+ # define POSCONTROL_POS_XY_FILT_HZ             5.0f    // horizontal position controller input filter
+ # define POSCONTROL_POS_XY_FILT_D_HZ           5.0f    // horizontal position controller derivative filter
  # define POSCONTROL_VEL_XY_P                   2.0f    // horizontal velocity controller P gain default
  # define POSCONTROL_VEL_XY_I                   1.0f    // horizontal velocity controller I gain default
  # define POSCONTROL_VEL_XY_D                   0.25f   // horizontal velocity controller D gain default
@@ -241,7 +259,7 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] = {
     // @Description: Position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller
     // @Range: 0.500 2.000
     // @User: Standard
-    AP_SUBGROUPINFO(_p_pos_ne_m, "_POSXY_", 5, AC_PosControl, AC_P_2D),
+    AP_SUBGROUPINFO(_p_pos_ne_m, "_POSXY_", 5, AC_PosControl, AC_PID_2D),
 
     // @Param: _VELXY_P
     // @DisplayName: Velocity (horizontal) P gain
@@ -334,7 +352,8 @@ AC_PosControl::AC_PosControl(AP_AHRS_View& ahrs, const AP_Motors& motors, AC_Att
     _ahrs(ahrs),
     _motors(motors),
     _attitude_control(attitude_control),
-    _p_pos_ne_m(POSCONTROL_POS_XY_P),
+    _p_pos_ne_m(POSCONTROL_POS_XY_P, POSCONTROL_POS_XY_I, POSCONTROL_POS_XY_D, POSCONTROL_POS_XY_FF, POSCONTROL_POS_XY_IMAX, POSCONTROL_POS_XY_FILT_HZ, POSCONTROL_POS_XY_FILT_D_HZ),
+    _pos_error_max_ne_m(0.0f),
     _p_pos_u_m(POSCONTROL_POS_Z_P),
     _pid_vel_ne_cm(POSCONTROL_VEL_XY_P, POSCONTROL_VEL_XY_I, POSCONTROL_VEL_XY_D, 0.0f, POSCONTROL_VEL_XY_IMAX, POSCONTROL_VEL_XY_FILT_HZ, POSCONTROL_VEL_XY_FILT_D_HZ),
     _pid_vel_u_cm(POSCONTROL_VEL_Z_P, 0.0f, 0.0f, 0.0f, POSCONTROL_VEL_Z_IMAX, POSCONTROL_VEL_Z_FILT_HZ, POSCONTROL_VEL_Z_FILT_D_HZ),
@@ -481,7 +500,9 @@ void AC_PosControl::set_correction_speed_accel_NE_cm(float speed_ne_cms, float a
 // These values constrain the PID correction path, not the desired trajectory.
 void AC_PosControl::set_correction_speed_accel_NE_m(float speed_ne_ms, float accel_ne_mss)
 {
-    _p_pos_ne_m.set_limits(speed_ne_ms, accel_ne_mss, 0.0f);
+    // limits handled externally when using full PID controller
+    (void)speed_ne_ms;
+    (void)accel_ne_mss;
 }
 
 // Initializes NE controller to a stationary stopping point with zero velocity and acceleration.
@@ -720,8 +741,14 @@ void AC_PosControl::update_NE_controller()
     Vector2p comb_pos_ne_m = _pos_estimate_neu_m.xy();
     comb_pos_ne_m += _disturb_pos_ne_m.topostype();
 
-    // Run P controller to compute velocity setpoint from position error
-    Vector2f vel_target_ne_ms = _p_pos_ne_m.update_all(_pos_target_neu_m.xy(), comb_pos_ne_m);
+    Vector2f pos_target = _pos_target_neu_m.xy().tofloat();
+    Vector2f pos_error = pos_target - comb_pos_ne_m.tofloat();
+    if (is_positive(_pos_error_max_ne_m) && pos_error.limit_length(_pos_error_max_ne_m)) {
+        pos_target = comb_pos_ne_m.tofloat() + pos_error;
+    }
+
+    // Run PID controller to compute velocity setpoint from position error
+    Vector2f vel_target_ne_ms = _p_pos_ne_m.update_all(pos_target, comb_pos_ne_m.tofloat(), _dt_s, _limit_vector_neu.xy());
     _pos_desired_neu_m.xy() = _pos_target_neu_m.xy() - _pos_offset_neu_m.xy();
 
     // Velocity Controller
@@ -1841,7 +1868,7 @@ bool AC_PosControl::pre_arm_checks(const char *param_prefix,
                                    char *failure_msg,
                                    const uint8_t failure_msg_len)
 {
-    if (!is_positive(get_pos_NE_p().kP())) {
+    if (!is_positive(get_pos_NE_pid().kP())) {
         hal.util->snprintf(failure_msg, failure_msg_len, "%s_POSXY_P must be > 0", param_prefix);
         return false;
     }

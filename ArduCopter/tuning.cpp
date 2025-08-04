@@ -113,7 +113,7 @@ void Copter::tuning(const RC_Channel *tuning_ch, int8_t tuning_param, float tuni
 
     // Loiter and navigation tuning
     case TUNING_LOITER_POSITION_KP:
-        pos_control->get_pos_NE_p().set_kP(tuning_value);
+        pos_control->get_pos_NE_pid().set_kP(tuning_value);
         break;
 
     case TUNING_VEL_XY_KP:

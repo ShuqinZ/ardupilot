@@ -821,7 +821,7 @@ void ModeGuided::velaccel_control_run()
     bool do_avoid = false;
 #if AP_AVOIDANCE_ENABLED
     // limit the velocity for obstacle/fence avoidance
-    copter.avoid.adjust_velocity(guided_vel_target_cms, pos_control->get_pos_NE_p().kP(), pos_control->get_max_accel_NE_cmss(), pos_control->get_pos_U_p().kP(), pos_control->get_max_accel_U_cmss(), G_Dt);
+    copter.avoid.adjust_velocity(guided_vel_target_cms, pos_control->get_pos_NE_pid().kP(), pos_control->get_max_accel_NE_cmss(), pos_control->get_pos_U_p().kP(), pos_control->get_max_accel_U_cmss(), G_Dt);
     do_avoid = copter.avoid.limits_active();
 #endif
 
