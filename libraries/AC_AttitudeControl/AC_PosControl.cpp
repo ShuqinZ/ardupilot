@@ -741,14 +741,14 @@ void AC_PosControl::update_NE_controller()
     Vector2p comb_pos_ne_m = _pos_estimate_neu_m.xy();
     comb_pos_ne_m += _disturb_pos_ne_m.topostype();
 
-    Vector2f pos_target = _pos_target_neu_m.xy();
-    Vector2f pos_error = pos_target - comb_pos_ne_m;
+    Vector2f pos_target = _pos_target_neu_m.xy().tofloat();
+    Vector2f pos_error = pos_target - comb_pos_ne_m.tofloat();
     if (is_positive(_pos_error_max_ne_m) && pos_error.limit_length(_pos_error_max_ne_m)) {
-        pos_target = comb_pos_ne_m + pos_error;
+        pos_target = comb_pos_ne_m.tofloat() + pos_error;
     }
 
     // Run PID controller to compute velocity setpoint from position error
-    Vector2f vel_target_ne_ms = _p_pos_ne_m.update_all(pos_target, comb_pos_ne_m, _dt_s, _limit_vector_neu.xy());
+    Vector2f vel_target_ne_ms = _p_pos_ne_m.update_all(pos_target, comb_pos_ne_m.tofloat(), _dt_s, _limit_vector_neu.xy());
     _pos_desired_neu_m.xy() = _pos_target_neu_m.xy() - _pos_offset_neu_m.xy();
 
     // Velocity Controller
