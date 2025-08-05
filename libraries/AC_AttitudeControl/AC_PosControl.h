@@ -6,7 +6,7 @@
 #include <AC_PID/AC_P.h>            // P library
 #include <AC_PID/AC_PID.h>          // PID library
 #include <AC_PID/AC_P_1D.h>         // P library (1-axis)
-#include <AC_PID/AC_P_2D.h>         // P library (2-axis)
+// #include <AC_PID/AC_P_2D.h>         // P library (2-axis)
 #include <AC_PID/AC_PI_2D.h>        // PI library (2-axis)
 #include <AC_PID/AC_PID_Basic.h>    // PID library (1-axis)
 #include <AC_PID/AC_PID_2D.h>       // PID library (2-axis)
@@ -86,8 +86,10 @@ public:
     float get_max_accel_xy_cmss() const { return _accel_max_xy_cmss; }
 
     // set the maximum horizontal position error that will be allowed in the horizontal plane
-    void set_pos_error_max_xy_cm(float error_max) { _p_pos_xy.set_error_max(error_max); }
-    float get_pos_error_max_xy_cm() { return _p_pos_xy.get_error_max(); }
+    // void set_pos_error_max_xy_cm(float error_max) { _p_pos_xy.set_error_max(error_max); }
+    // float get_pos_error_max_xy_cm() { return _p_pos_xy.get_error_max(); }
+    void set_pos_error_max_xy_cm(float error_max) { _pos_error_max_xy_cm = error_max; }
+    float get_pos_error_max_xy_cm() { return _pos_error_max_xy_cm; }
 
     /// init_xy_controller_stopping_point - initialise the position controller to the stopping point with zero velocity and acceleration.
     ///     This function should be used when the expected kinematic path assumes a stationary initial condition but does not specify a specific starting position.
@@ -355,7 +357,9 @@ public:
     /// Other
 
     /// get pid controllers
-    AC_P_2D& get_pos_xy_p() { return _p_pos_xy; }
+    // AC_P_2D& get_pos_xy_p() { return _p_pos_xy; }
+
+    AC_PID_2D& get_pos_xy_p() { return _pid_pos_xy; }
     AC_P_1D& get_pos_z_p() { return _p_pos_z; }
     AC_PID_2D& get_vel_xy_pid() { return _pid_vel_xy; }
     AC_PID_Basic& get_vel_z_pid() { return _pid_vel_z; }
@@ -432,7 +436,10 @@ protected:
     AP_Float        _lean_angle_max;    // Maximum autopilot commanded angle (in degrees). Set to zero for Angle Max
     AP_Float        _shaping_jerk_xy;   // Jerk limit of the xy kinematic path generation in m/s^3 used to determine how quickly the aircraft varies the acceleration target
     AP_Float        _shaping_jerk_z;    // Jerk limit of the z kinematic path generation in m/s^3 used to determine how quickly the aircraft varies the acceleration target
-    AC_P_2D         _p_pos_xy;          // XY axis position controller to convert distance error to desired velocity
+    // AC_P_2D         _p_pos_xy;          // XY axis position controller to convert distance error to desired velocity
+
+    AC_PID_2D       _pid_pos_xy;        // XY axis position PID controller to convert distance error to desired velocity
+    float           _pos_error_max_xy_cm; // maximum allowed horizontal position error in cm
     AC_P_1D         _p_pos_z;           // Z axis position controller to convert altitude error to desired climb rate
     AC_PID_2D       _pid_vel_xy;        // XY axis velocity controller to convert velocity error to desired acceleration
     AC_PID_Basic    _pid_vel_z;         // Z axis velocity controller to convert climb rate error to desired acceleration

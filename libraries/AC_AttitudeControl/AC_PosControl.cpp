@@ -236,7 +236,7 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] = {
     // @Description: Position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller
     // @Range: 0.500 2.000
     // @User: Standard
-    AP_SUBGROUPINFO(_p_pos_xy, "_POSXY_", 5, AC_PosControl, AC_P_2D),
+    AP_SUBGROUPINFO(_p_pos_xy, "_POSXY_", 5, AC_PosControl, AC_PID_2D),
 
     // @Param: _VELXY_P
     // @DisplayName: Velocity (horizontal) P gain
@@ -334,7 +334,9 @@ AC_PosControl::AC_PosControl(AP_AHRS_View& ahrs, const AP_InertialNav& inav,
     _p_pos_z(POSCONTROL_POS_Z_P),
     _pid_vel_z(POSCONTROL_VEL_Z_P, 0.0f, 0.0f, 0.0f, POSCONTROL_VEL_Z_IMAX, POSCONTROL_VEL_Z_FILT_HZ, POSCONTROL_VEL_Z_FILT_D_HZ),
     _pid_accel_z(POSCONTROL_ACC_Z_P, POSCONTROL_ACC_Z_I, POSCONTROL_ACC_Z_D, 0.0f, POSCONTROL_ACC_Z_IMAX, 0.0f, POSCONTROL_ACC_Z_FILT_HZ, 0.0f),
-    _p_pos_xy(POSCONTROL_POS_XY_P),
+    // _p_pos_xy(POSCONTROL_POS_XY_P),
+    _pid_pos_xy(POSCONTROL_POS_XY_P, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
+    _pos_error_max_xy_cm(0.0f),
     _pid_vel_xy(POSCONTROL_VEL_XY_P, POSCONTROL_VEL_XY_I, POSCONTROL_VEL_XY_D, 0.0f, POSCONTROL_VEL_XY_IMAX, POSCONTROL_VEL_XY_FILT_HZ, POSCONTROL_VEL_XY_FILT_D_HZ),
     _vel_max_down_cms(POSCONTROL_SPEED_DOWN),
     _vel_max_up_cms(POSCONTROL_SPEED_UP),
@@ -373,7 +375,8 @@ void AC_PosControl::input_pos_xyz(const Vector3p& pos, float pos_offset_z, float
     const float accel_max_z_cmss = _accel_max_z_cmss * overspeed_gain;
     const float jerk_max_z_cmsss = _jerk_max_z_cmsss * overspeed_gain;
 
-    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    // update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _pid_pos_xy.get_error(), _pid_vel_xy.get_error());
 
     // adjust desired altitude if motors have not hit their limits
     update_pos_vel_accel(_pos_target.z, _vel_desired.z, _accel_desired.z, _dt, _limit_vector.z, _p_pos_z.get_error(), _pid_vel_z.get_error());
@@ -461,7 +464,9 @@ void AC_PosControl::set_max_speed_accel_xy(float speed_cms, float accel_cmss)
 ///     This should be done only during initialisation to avoid discontinuities
 void AC_PosControl::set_correction_speed_accel_xy(float speed_cms, float accel_cmss)
 {
-    _p_pos_xy.set_limits(speed_cms, accel_cmss, 0.0f);
+    // _p_pos_xy.set_limits(speed_cms, accel_cmss, 0.0f);
+    (void)speed_cms;
+    (void)accel_cmss;
 }
 
 /// init_xy_controller_stopping_point - initialise the position controller to the stopping point with zero velocity and acceleration.
@@ -556,7 +561,9 @@ void AC_PosControl::input_accel_xy(const Vector3f& accel)
     // check for ekf xy position reset
     handle_ekf_xy_reset();
 
-    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    // update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _pid_pos_xy.get_error(), _pid_vel_xy.get_error());
+    
     shape_accel_xy(accel, _accel_desired, _jerk_max_xy_cmsss, _dt);
 }
 
@@ -567,7 +574,8 @@ void AC_PosControl::input_accel_xy(const Vector3f& accel)
 ///     The parameter limit_output specifies if the velocity and acceleration limits are applied to the sum of commanded and correction values or just correction.
 void AC_PosControl::input_vel_accel_xy(Vector2f& vel, const Vector2f& accel, bool limit_output)
 {
-    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    // update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _pid_pos_xy.get_error(), _pid_vel_xy.get_error());
 
     shape_vel_accel_xy(vel, accel, _vel_desired.xy(), _accel_desired.xy(),
         _accel_max_xy_cmss, _jerk_max_xy_cmsss, _dt, limit_output);
@@ -582,7 +590,8 @@ void AC_PosControl::input_vel_accel_xy(Vector2f& vel, const Vector2f& accel, boo
 ///     The parameter limit_output specifies if the velocity and acceleration limits are applied to the sum of commanded and correction values or just correction.
 void AC_PosControl::input_pos_vel_accel_xy(Vector2p& pos, Vector2f& vel, const Vector2f& accel, bool limit_output)
 {
-    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    // update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _p_pos_xy.get_error(), _pid_vel_xy.get_error());
+    update_pos_vel_accel_xy(_pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(), _dt, _limit_vector.xy(), _pid_pos_xy.get_error(), _pid_vel_xy.get_error());
 
     shape_pos_vel_accel_xy(pos, vel, accel, _pos_target.xy(), _vel_desired.xy(), _accel_desired.xy(),
                            _vel_max_xy_cms, _accel_max_xy_cmss, _jerk_max_xy_cmsss, _dt, limit_output);
@@ -643,7 +652,15 @@ void AC_PosControl::update_xy_controller()
     // Position Controller
 
     const Vector3f &curr_pos = _inav.get_position_neu_cm();
-    Vector2f vel_target = _p_pos_xy.update_all(_pos_target.x, _pos_target.y, curr_pos);
+    // Vector2f vel_target = _p_pos_xy.update_all(_pos_target.x, _pos_target.y, curr_pos);
+    Vector2f curr_pos_xy = curr_pos.xy();
+    Vector2f target_xy = _pos_target.xy().tofloat();
+    Vector2f pos_error = target_xy - curr_pos_xy;
+    if (is_positive(_pos_error_max_xy_cm) && pos_error.limit_length(_pos_error_max_xy_cm)) {
+        target_xy = curr_pos_xy + pos_error;
+        _pos_target.xy() = target_xy.topostype();
+    }
+    Vector2f vel_target = _pid_pos_xy.update_all(target_xy, curr_pos_xy, _dt, Vector2f());
 
     // add velocity feed-forward scaled to compensate for optical flow measurement induced EKF noise
     vel_target *= ahrsControlScaleXY;
@@ -1083,7 +1100,8 @@ Vector3f AC_PosControl::get_thrust_vector() const
 void AC_PosControl::get_stopping_point_xy_cm(Vector2p &stopping_point) const
 {
     stopping_point = _inav.get_position_xy_cm().topostype();
-    float kP = _p_pos_xy.kP();
+    // float kP = _p_pos_xy.kP();
+    float kP = _pid_pos_xy.kP();
 
     Vector2f curr_vel = _inav.get_velocity_xy_cms();
 
@@ -1285,7 +1303,9 @@ void AC_PosControl::handle_ekf_xy_reset()
     uint32_t reset_ms = _ahrs.getLastPosNorthEastReset(pos_shift);
     if (reset_ms != _ekf_xy_reset_ms) {
 
-        _pos_target.xy() = (_inav.get_position_xy_cm() + _p_pos_xy.get_error()).topostype();
+        // _pos_target.xy() = (_inav.get_position_xy_cm() + _p_pos_xy.get_error()).topostype();
+
+        _pos_target.xy() = (_inav.get_position_xy_cm() + _pid_pos_xy.get_error()).topostype();
         _vel_target.xy() = _inav.get_velocity_xy_cms() + _pid_vel_xy.get_error();
 
         _ekf_xy_reset_ms = reset_ms;
