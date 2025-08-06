@@ -1,0 +1,3 @@
+Don't know how to attach.  Try "help target".
+/tmp/gdb.86014:2: Error in sourced command file:
+You can't do that without a process to debug.
