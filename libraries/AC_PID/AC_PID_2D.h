@@ -49,11 +49,17 @@ public:
 
     // get accessors
     AP_Float &kP() { return _kp; }
+    const AP_Float &kP() const { return _kp; }
     AP_Float &kI() { return _ki; }
+    const AP_Float &kI() const { return _ki; }
     AP_Float &kD() { return _kd; }
+    const AP_Float &kD() const { return _kd; }
     AP_Float &ff() { return _kff;}
+    const AP_Float &ff() const { return _kff; }
     AP_Float &filt_E_hz() { return _filt_E_hz; }
+    const AP_Float &filt_E_hz() const { return _filt_E_hz; }
     AP_Float &filt_D_hz() { return _filt_D_hz; }
+    const AP_Float &filt_D_hz() const { return _filt_D_hz; }
     float imax() const { return _kimax.get(); }
     float get_filt_E_alpha(float dt) const;
     float get_filt_D_alpha(float dt) const;

@@ -62,6 +62,12 @@ extern const AP_HAL::HAL& hal;
  # define POSCONTROL_ACC_Z_FILT_HZ              20.0f   // vertical acceleration controller input filter default
  # define POSCONTROL_ACC_Z_DT                   0.0025f // vertical acceleration controller dt default
  # define POSCONTROL_POS_XY_P                   1.0f    // horizontal position controller P gain default
+ # define POSCONTROL_POS_XY_I                   0.0f    // horizontal position controller I gain default
+ # define POSCONTROL_POS_XY_D                   0.0f    // horizontal position controller D gain default
+ # define POSCONTROL_POS_XY_FF                  0.0f    // horizontal position controller feed forward gain default
+ # define POSCONTROL_POS_XY_IMAX                0.0f    // horizontal position controller IMAX gain default
+ # define POSCONTROL_POS_XY_FILT_HZ             0.0f    // horizontal position controller input filter
+ # define POSCONTROL_POS_XY_FILT_D_HZ           0.0f    // horizontal position controller input filter for D
  # define POSCONTROL_VEL_XY_P                   2.0f    // horizontal velocity controller P gain default
  # define POSCONTROL_VEL_XY_I                   1.0f    // horizontal velocity controller I gain default
  # define POSCONTROL_VEL_XY_D                   0.5f    // horizontal velocity controller D gain default
@@ -236,7 +242,7 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] = {
     // @Description: Position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller
     // @Range: 0.500 2.000
     // @User: Standard
-    AP_SUBGROUPINFO(_p_pos_xy, "_POSXY_", 5, AC_PosControl, AC_PID_2D),
+    AP_SUBGROUPINFO(_pid_pos_xy, "_POSXY_", 5, AC_PosControl, AC_PID_2D),
 
     // @Param: _VELXY_P
     // @DisplayName: Velocity (horizontal) P gain
@@ -335,7 +341,7 @@ AC_PosControl::AC_PosControl(AP_AHRS_View& ahrs, const AP_InertialNav& inav,
     _pid_vel_z(POSCONTROL_VEL_Z_P, 0.0f, 0.0f, 0.0f, POSCONTROL_VEL_Z_IMAX, POSCONTROL_VEL_Z_FILT_HZ, POSCONTROL_VEL_Z_FILT_D_HZ),
     _pid_accel_z(POSCONTROL_ACC_Z_P, POSCONTROL_ACC_Z_I, POSCONTROL_ACC_Z_D, 0.0f, POSCONTROL_ACC_Z_IMAX, 0.0f, POSCONTROL_ACC_Z_FILT_HZ, 0.0f),
     // _p_pos_xy(POSCONTROL_POS_XY_P),
-    _pid_pos_xy(POSCONTROL_POS_XY_P, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
+    _pid_pos_xy(POSCONTROL_POS_XY_P, POSCONTROL_POS_XY_I, POSCONTROL_POS_XY_D, POSCONTROL_POS_XY_FF, POSCONTROL_POS_XY_IMAX, POSCONTROL_POS_XY_FILT_HZ, POSCONTROL_POS_XY_FILT_D_HZ),
     _pos_error_max_xy_cm(0.0f),
     _pid_vel_xy(POSCONTROL_VEL_XY_P, POSCONTROL_VEL_XY_I, POSCONTROL_VEL_XY_D, 0.0f, POSCONTROL_VEL_XY_IMAX, POSCONTROL_VEL_XY_FILT_HZ, POSCONTROL_VEL_XY_FILT_D_HZ),
     _vel_max_down_cms(POSCONTROL_SPEED_DOWN),
